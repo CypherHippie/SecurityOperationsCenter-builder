@@ -1,4 +1,3 @@
-```markdown
 # Security Operations Center (SOC) Setup Script
 
 This script automates the installation and configuration of components typically found in a Security Operations Center (SOC) environment. It is designed to run on Linux-based systems.
