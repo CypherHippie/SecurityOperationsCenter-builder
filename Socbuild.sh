@@ -44,14 +44,18 @@ install_configure_ips_ids() {
 }
 
 # Function to install and configure the breach detection solution (OSSEC)
-install_configure_breach_detection() {
-    echo "Installing and configuring breach detection solution (OSSEC)..."
-    if check_component_installed ossec-hids; then
-        echo "OSSEC is already installed."
+install_configure_ossec() {
+    echo "Installing and configuring OSSEC HIDS..."
+    if check_component_installed ossec-hids-server; then
+        echo "OSSEC HIDS server/manager is already installed."
     else
-        sudo apt-get install -y ossec-hids
+        # Install dependencies and add Atomicorp repository
+        sudo apt-get install -y curl
+        curl -fsSL https://updates.atomicorp.com/installers/atomic | sudo bash
+        sudo apt-get update
+        # Install OSSEC HIDS server/manager
+        sudo apt-get install -y ossec-hids-server
     fi
-    sudo /var/ossec/bin/ossec-control start
 }
 
 # Function to install and configure the security probe (Suricata)
@@ -68,15 +72,27 @@ install_configure_security_probe() {
 }
 
 # Function to install and configure the SIEM (ELK Stack)
-install_configure_siem() {
-    echo "Installing and configuring SIEM (ELK Stack)..."
-    if check_component_installed elasticsearch && check_component_installed logstash && check_component_installed kibana; then
-        echo "ELK Stack is already installed."
+install_configure_elk_stack() {
+    echo "Installing and configuring ELK Stack (Elasticsearch SIEM)..."
+    if check_component_installed elasticsearch && check_component_installed kibana; then
+        echo "ELK Stack (Elasticsearch SIEM) is already installed."
     else
-        sudo apt-get install -y openjdk-8-jdk elasticsearch logstash kibana
+        # Install dependencies and add Elastic repository
+        sudo apt-get install -y curl
+        curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/elastic-archive-keyring.gpg
+        echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-8.x.list
+        sudo apt-get update
+        # Install Elasticsearch
+        sudo apt-get install -y elasticsearch
+        sudo sed -e '/cluster.initial_master_nodes/ s/^#*/#/' -i /etc/elasticsearch/elasticsearch.yml
+        echo "discovery.type: single-node" | sudo tee -a /etc/elasticsearch/elasticsearch.yml
+        # Install Kibana
+        sudo apt-get install -y kibana
+        sudo /usr/share/kibana/bin/kibana-encryption-keys generate -q
+        echo "server.host: \"kali-purple.kali.purple\"" | sudo tee -a /etc/kibana/kibana.yml
+        # Enable and start Elasticsearch and Kibana services
+        sudo systemctl enable elasticsearch kibana --now
     fi
-    sudo systemctl start elasticsearch logstash kibana
-    sudo systemctl enable elasticsearch logstash kibana
 }
 
 # Main function
@@ -92,7 +108,7 @@ main() {
         1)
             install_configure_firewall
             install_configure_ips_ids
-            install_configure_breach_detection
+            install_configure_ossec
             install_configure_security_probe
             install_configure_siem
             ;;
@@ -115,7 +131,7 @@ main() {
                         install_configure_ips_ids
                         ;;
                     3)
-                        install_configure_breach_detection
+                        install_configure_ossec
                         ;;
                     4)
                         install_configure_security_probe
