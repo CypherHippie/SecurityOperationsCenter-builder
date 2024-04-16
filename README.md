@@ -19,12 +19,12 @@ This script automates the installation and configuration of components typically
 
 2. Navigate to the directory containing the script:
    ```bash
-   cd soc-setup-script
+   cd SecurityOperationsCenter-builder
    ```
 
 3. Run the script:
    ```bash
-   ./soc_setup.sh
+  sudo bash ./Socbuild.sh
    ```
 
 4. Follow the on-screen instructions to choose the component you want to install and configure.
