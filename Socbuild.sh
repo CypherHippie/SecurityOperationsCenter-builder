@@ -9,6 +9,14 @@ check_component_installed() {
     fi
 }
 
+# Function to verify if the system is Linux-based
+check_linux_system() {
+    if [ "$(uname -s)" != "Linux" ]; then
+        echo "This script is intended to run on Linux-based systems only."
+        exit 1
+    fi
+}
+
 # Function to install and configure the firewall (iptables)
 install_configure_firewall() {
     echo "Installing and configuring firewall (iptables)..."
@@ -73,34 +81,56 @@ install_configure_siem() {
 
 # Main function
 main() {
-    if [ "$(uname -s)" != "Linux" ]; then
-        echo "This script is intended to run on Linux-based systems only."
-        exit 1
-    fi
+    check_linux_system
 
-    echo "Enter the component you want to install and configure:"
-    echo "1. Firewall (iptables)"
-    echo "2. IPS/IDS (Snort)"
-    echo "3. Breach detection solution (OSSEC)"
-    echo "4. Security probe (Suricata)"
-    echo "5. SIEM (ELK Stack)"
-    read -p "Enter the component number: " choice
+    echo "Select your installation method:"
+    echo "1. Quick Install (All components with default configurations)"
+    echo "2. Custom Install (Choose individual components and configurations)"
+    read -p "Enter your choice: " choice
 
     case $choice in
         1)
             install_configure_firewall
+            install_configure_ips_ids
+            install_configure_breach_detection
+            install_configure_security_probe
+            install_configure_siem
             ;;
         2)
-            install_configure_ips_ids
-            ;;
-        3)
-            install_configure_breach_detection
-            ;;
-        4)
-            install_configure_security_probe
-            ;;
-        5)
-            install_configure_siem
+            echo "Enter the component you want to install and configure:"
+            echo "1. Firewall (iptables)"
+            echo "2. IPS/IDS (Snort)"
+            echo "3. Breach detection solution (OSSEC)"
+            echo "4. Security probe (Suricata)"
+            echo "5. SIEM (ELK Stack)"
+            echo "6. Exit"
+            read -p "Enter the component number (or 'done' to finish): " component_choice
+
+            while [[ ! $component_choice =~ ^(done|6)$ ]]; do
+                case $component_choice in
+                    1)
+                        install_configure_firewall
+                        ;;
+                    2)
+                        install_configure_ips_ids
+                        ;;
+                    3)
+                        install_configure_breach_detection
+                        ;;
+                    4)
+                        install_configure_security_probe
+                        ;;
+                    5)
+                        install_configure_siem
+                        ;;
+                    *)
+                        echo "Invalid choice. Please try again."
+                        ;;
+                esac
+
+                echo "Select the next component to install or enter 'done' to finish."
+                read -p "Enter the component number: " component_choice
+            done
             ;;
         *)
             echo "Invalid choice. Exiting."
